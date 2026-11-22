@@ -2,7 +2,7 @@
 // 旅行アプリと同じ kn-base.github.io の下にあり、保存場所（キャッシュ）を共有するため、
 // 名前に「mochimono-」を付け、消すときも自分の分だけを消す
 const PREFIX = 'mochimono-shell-';
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = PREFIX + VERSION;
 const ASSETS = [
   './', './index.html', './style.css', './app.js', './manifest.webmanifest',

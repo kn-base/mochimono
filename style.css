@@ -200,6 +200,8 @@ body.panel-open .add-btn { opacity: 0; pointer-events: none; transition-delay: 0
 .sum-total > div { padding: 18px 0 16px; }
 .sum-total > div + div { border-left: 1px solid var(--line); padding-left: 18px; }
 .sum-total b { display: block; font-family: var(--mono); font-weight: 400; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.sum-total > .sum-daily { grid-column: 1 / -1; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); }
+.sum-total b i { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 2px; }
 .sum-total small { display: block; margin-top: 2px; font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .06em; }
 .sum-cols, .sum-row { display: grid; grid-template-columns: 24px 1fr 104px 104px; gap: 12px; align-items: center; }
 .sum-cols { padding: 0 0 8px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 9.5px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }

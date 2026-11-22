@@ -131,6 +131,14 @@
     const v = it.price / a.days;
     return v >= 10 ? yen(v) : '¥' + (Math.round(v * 10) / 10).toFixed(1);
   }
+  // 今持っている物の「1日あたりの値段」を全部足した額（手放した物・価格のない物は除く）
+  function dailyTotal(list = items()) {
+    return list.filter(x => !x.released && Number.isFinite(x.price)).reduce((t, x) => {
+      const a = age(x);
+      return a ? t + x.price / a.days : t;
+    }, 0);
+  }
+  function dailyYen(v) { return v >= 10 ? yen(v) : '¥' + (Math.round(v * 10) / 10).toFixed(1); }
   function dotColor(it) {
     if (it.released) return RELEASED_DOT;
     const a = age(it);
@@ -294,7 +302,8 @@
     } else {
       const owned = items().filter(x => !x.released).length;
       const gone = items().length - owned;
-      $('#stats').textContent = items().length ? `${owned} ITEMS${gone ? ` · ${gone} RELEASED` : ''}` : '';
+      const dt = dailyTotal();
+      $('#stats').textContent = items().length ? `${owned} ITEMS${dt ? ` · 今日 ${dailyYen(dt)}` : ''}${gone ? ` · ${gone} RELEASED` : ''}` : '';
     }
   }
 
@@ -409,6 +418,7 @@
       <div class="sum-total">
         <div><span class="fig-label" style="margin:0 0 6px">今持っている分</span><b>${yen(tot.own)}</b><small>${tot.ownN} ITEMS</small></div>
         <div><span class="fig-label" style="margin:0 0 6px">今までに使った分</span><b>${yen(tot.all)}</b><small>${tot.allN} ITEMS</small></div>
+        <div class="sum-daily"><span class="fig-label" style="margin:0 0 6px">今日の1日あたり合計</span><b>${dailyYen(dailyTotal())}<i>/日</i></b><small>今持っている物の1日あたりの値段を足した額</small></div>
       </div>
       ${rows.length ? `
         <div class="sum-cols"><span></span><span>Genre</span><span>持っている</span><span>今まで</span></div>
@@ -674,7 +684,7 @@
     const isNew = !it;
     formState = {
       draft: it
-        ? { name: it.name || '', category: catOf(it), purchased: it.purchased || '', price: Number.isFinite(it.price) ? String(it.price) : '', model: it.model || '', memo: it.memo || '' }
+        ? { name: it.name || '', category: catOf(it), purchased: it.purchased || '', released: it.released || '', price: Number.isFinite(it.price) ? String(it.price) : '', model: it.model || '', memo: it.memo || '' }
         : { name: '', category: '', purchased: today(), price: '', model: '', memo: '' },
       html: d => `<h3 class="form-title">${isNew ? '持ち物を追加' : '編集'}</h3>
         <label class="field"><span>品名</span><input name="name" value="${esc(d.name)}" autocomplete="off" enterkeyhint="next"></label>
@@ -684,6 +694,7 @@
           <label class="field"><span>購入日</span><input name="purchased" type="date" value="${esc(d.purchased)}" max="${today()}"></label>
           <label class="field"><span>購入価格（円）</span><input name="price" value="${esc(d.price)}" inputmode="numeric" autocomplete="off" placeholder="例：48000"></label>
         </div>
+        ${it && it.released ? `<label class="field"><span>手放した日</span><input name="released" type="date" value="${esc(d.released)}" max="${today()}"></label>` : ''}
         <label class="field"><span>型番・JAN（任意）</span><input name="model" value="${esc(d.model)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
         <label class="field"><span>メモ（任意）</span><textarea name="memo" rows="3" placeholder="買ったときの思い出、購入場所など">${esc(d.memo)}</textarea></label>
         ${actionsHtml()}`,
@@ -692,7 +703,11 @@
         if (!CATEGORIES[d.category]) return 'ジャンルを選んでください';
         if (!isDate(d.purchased)) return '購入日を入れてください';
         if (d.purchased > today()) return '購入日が未来になっています';
-        if (it && it.released && d.purchased > it.released) return '購入日が手放した日より後になっています';
+        if (it && it.released) {
+          if (!isDate(d.released)) return '手放した日を入れてください（持ち物に戻すときは詳細画面の「持ち物に戻す」）';
+          if (d.released > today()) return '手放した日が未来になっています';
+          if (d.purchased > d.released) return '購入日が手放した日より後になっています';
+        }
         const p = num(d.price);
         if (Number.isNaN(p) || (p != null && p < 0)) return '購入価格は数字で入れてください';
         return '';
@@ -717,6 +732,7 @@
             const x = data.items.find(y => y.id === it.id);
             if (!x) return;
             for (const k of ['name', 'category', 'purchased']) x[k] = rec[k];
+            if (it.released && isDate(d.released)) x.released = d.released;
             for (const k of ['price', 'model', 'memo']) { if (rec[k] == null || rec[k] === '') delete x[k]; else x[k] = rec[k]; }
           });
         }
